@@ -136,11 +136,10 @@ class TranscriptionEditor(QPlainTextEdit):
     # ------------------------------------------------------------------
 
     def keyPressEvent(self, event) -> None:
-        # Zoom shortcuts: Ctrl++ / Ctrl+- / Ctrl+KP_Plus / Ctrl+KP_Minus
-        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+        # Zoom shortcuts: Ctrl++ / Ctrl+KP_Plus and Ctrl+- / Ctrl+KP_Minus
+        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             key = event.key()
-            if key in (Qt.Key.Key_Plus, Qt.Key.Key_Equal,
-                       Qt.Key.Key_BracketRight):
+            if key in (Qt.Key.Key_Plus, Qt.Key.Key_Equal):
                 self.zoom_in()
                 return
             if key == Qt.Key.Key_Minus:
@@ -225,18 +224,18 @@ class MainWindow(QMainWindow):
 
         tb.addSeparator()
 
-        # Zoom in / out
-        act_zoom_in = QAction("🔍+", self)
-        act_zoom_in.setToolTip("Zoom in (Ctrl++)")
-        act_zoom_in.setShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Key.Key_Plus))
-        act_zoom_in.triggered.connect(self._zoom_in)
-        tb.addAction(act_zoom_in)
+        # Zoom in / out – actions stored for reuse in the menu
+        self._act_zoom_in = QAction("🔍+", self)
+        self._act_zoom_in.setToolTip("Zoom in (Ctrl++)")
+        self._act_zoom_in.setShortcut(QKeySequence.StandardKey.ZoomIn)
+        self._act_zoom_in.triggered.connect(self._zoom_in)
+        tb.addAction(self._act_zoom_in)
 
-        act_zoom_out = QAction("🔍-", self)
-        act_zoom_out.setToolTip("Zoom out (Ctrl+-)")
-        act_zoom_out.setShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Key.Key_Minus))
-        act_zoom_out.triggered.connect(self._zoom_out)
-        tb.addAction(act_zoom_out)
+        self._act_zoom_out = QAction("🔍-", self)
+        self._act_zoom_out.setToolTip("Zoom out (Ctrl+-)")
+        self._act_zoom_out.setShortcut(QKeySequence.StandardKey.ZoomOut)
+        self._act_zoom_out.triggered.connect(self._zoom_out)
+        tb.addAction(self._act_zoom_out)
 
         tb.addSeparator()
 
@@ -286,16 +285,8 @@ class MainWindow(QMainWindow):
         file_menu.addAction(act_close)
 
         view_menu = menubar.addMenu("&View")
-
-        act_zoom_in = QAction("Zoom &In", self)
-        act_zoom_in.setShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Key.Key_Plus))
-        act_zoom_in.triggered.connect(self._zoom_in)
-        view_menu.addAction(act_zoom_in)
-
-        act_zoom_out = QAction("Zoom &Out", self)
-        act_zoom_out.setShortcut(QKeySequence(Qt.Modifier.CTRL | Qt.Key.Key_Minus))
-        act_zoom_out.triggered.connect(self._zoom_out)
-        view_menu.addAction(act_zoom_out)
+        view_menu.addAction(self._act_zoom_in)
+        view_menu.addAction(self._act_zoom_out)
 
         phonemes_menu = menubar.addMenu("&Phonemes")
 
