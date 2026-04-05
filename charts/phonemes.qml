@@ -7,8 +7,93 @@ ApplicationWindow {
     visible: true
     width: 1080
     height: 750
-    title: "Interactive English Phonemes"
+    title: "Interactive English Phonemes (Data-Driven)"
     color: "#ffffff"
+
+    // --- DATA LOADING & PARSING ---
+    property var phonemeData: null
+    
+    // Arrays to hold our processed diphthong groupings
+    property var diphthongGroup1: []
+    property var diphthongGroup2: []
+    property var diphthongGroup3: []
+
+    Component.onCompleted: {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200 || xhr.status === 0) {
+                    try {
+                        phonemeData = JSON.parse(xhr.responseText);
+                        processDiphthongs();
+                    } catch (e) {
+                        console.error("Error parsing JSON: " + e);
+                    }
+                } else {
+                    console.error("Failed to load JSON: " + xhr.status);
+                }
+            }
+        };
+        xhr.open("GET", "en_phonemes.json", true);
+        xhr.send();
+    }
+
+    // --- HELPER FUNCTIONS ---
+    
+    // Searches JSON for monophthongs to populate VowelLabels
+    function getV(code) {
+        if (!phonemeData) return "";
+        var arr = phonemeData.monophthongs.short_vowels.concat(phonemeData.monophthongs.long_vowels);
+        for (var i = 0; i < arr.length; i++) {
+            // .trim() is used because "^" had a trailing space in the JSON file
+            if (arr[i].code.trim() === code.trim()) {
+                return "/" + arr[i].ipa + "/";
+            }
+        }
+        return "";
+    }
+
+    // Searches JSON for consonants to populate the Grid Cells
+    function getC(code) {
+        if (!phonemeData) return "";
+        for (var category in phonemeData.consonants) {
+            var arr = phonemeData.consonants[category];
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i].code === code) {
+                    return "<code>" + code + "</code><br>/" + arr[i].ipa + "/";
+                }
+            }
+        }
+        return "";
+    }
+
+    // Prepares the Diphthong arrays for the 3 target cards based on the loaded JSON
+    function processDiphthongs() {
+        if (!phonemeData) return;
+        var g1 = [], g2 = [], g3 = [];
+        
+        for (var i = 0; i < phonemeData.diphthongs.length; i++) {
+            var d = phonemeData.diphthongs[i];
+            var ipa = "/" + d.ipa + "/";
+            var start = "", end = "";
+            
+            // Map the visual "anchor" logic based on the actual IPA glides from the JSON
+            if (d.code === "eI") { start = "e"; end = "I"; g1.push({start:start, end:end, code:d.code, ipa:ipa, example:d.ex}); }
+            else if (d.code === "aI") { start = "a"; end = "I"; g1.push({start:start, end:end, code:d.code, ipa:ipa, example:d.ex}); }
+            else if (d.code === "oy") { start = "o"; end = "I"; g1.push({start:start, end:end, code:d.code, ipa:ipa, example:d.ex}); }
+            
+            else if (d.code === "oa") { start = "uh"; end = "u"; g2.push({start:start, end:end, code:d.code, ipa:ipa, example:d.ex}); }
+            else if (d.code === "ow") { start = "a"; end = "u"; g2.push({start:start, end:end, code:d.code, ipa:ipa, example:d.ex}); }
+            
+            else if (d.code === "ia") { start = "I"; end = "uh"; g3.push({start:start, end:end, code:d.code, ipa:ipa, example:d.ex}); } 
+            else if (d.code === "ea") { start = "e"; end = "uh"; g3.push({start:start, end:end, code:d.code, ipa:ipa, example:d.ex}); }
+            else if (d.code === "ua") { start = "oo"; end = "uh"; g3.push({start:start, end:end, code:d.code, ipa:ipa, example:d.ex}); } 
+        }
+        
+        diphthongGroup1 = g1;
+        diphthongGroup2 = g2;
+        diphthongGroup3 = g3;
+    }
 
     // --- GLOBAL INTERACTIVE STATE (For Vowels) ---
     property string activeStartCode: ""
@@ -18,7 +103,6 @@ ApplicationWindow {
     onActiveStartCodeChanged: arrowCanvas.requestPaint()
     onActiveEndCodeChanged: arrowCanvas.requestPaint()
 
-    // Centralized coordinate map for the canvas to draw lines
     readonly property var vowelMap: {
         "i": {x: 0.02, y: 0.02}, "I": {x: 0.14, y: 0.16}, "e": {x: 0.18, y: 0.30}, "ae": {x: 0.35, y: 0.73},
         "uh": {x: 0.46, y: 0.44}, "er": {x: 0.44, y: 0.58}, "^": {x: 0.58, y: 0.68},
@@ -28,7 +112,6 @@ ApplicationWindow {
 
     // --- REUSABLE COMPONENTS ---
 
-    // 1. Interactive Vowel Label
     component VowelLabel : Rectangle {
         id: labelRoot
         property string codeText: ""
@@ -43,18 +126,14 @@ ApplicationWindow {
         height: contentRow.implicitHeight + 6
         radius: 4
 
-        // Highlight logic
         property bool isActive: root.activeStartCode === codeText || root.activeEndCode === codeText || 
                                 (root.activeStartCode === "a" && (codeText === "ae" || codeText === "aa" || codeText === "ah")) ||
                                 (root.activeStartCode === "o" && (codeText === "ou" || codeText === "ah"))
         
         z: isActive ? 20 : 10 
-        
         opacity: (root.activeStartCode !== "" && !isActive) ? 0.3 : 1.0
         
-        Behavior on opacity {
-            NumberAnimation { duration: 200 }
-        }
+        Behavior on opacity { NumberAnimation { duration: 200 } }
         
         color: isActive ? root.activeColor : "white"
         border.color: isActive ? Qt.darker(root.activeColor, 1.2) : "#dddddd"
@@ -87,7 +166,6 @@ ApplicationWindow {
         }
     }
 
-    // 2. Interactive Diphthong Card
     component DiphthongCard : Rectangle {
         id: cardRoot
         width: 270
@@ -117,21 +195,8 @@ ApplicationWindow {
                 Column {
                     anchors.centerIn: parent
                     spacing: 4
-                    Text {
-                        text: cardRoot.titleText
-                        color: "white"
-                        font.bold: true
-                        font.pixelSize: 16
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Text {
-                        text: "Target: <b>" + cardRoot.targetText + "</b>"
-                        color: "white"
-                        opacity: 0.9
-                        font.pixelSize: 13
-                        textFormat: Text.RichText
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
+                    Text { text: cardRoot.titleText; color: "white"; font.bold: true; font.pixelSize: 16; anchors.horizontalCenter: parent.horizontalCenter }
+                    Text { text: "Target: <b>" + cardRoot.targetText + "</b>"; color: "white"; opacity: 0.9; font.pixelSize: 13; textFormat: Text.RichText; anchors.horizontalCenter: parent.horizontalCenter }
                 }
             }
 
@@ -160,26 +225,10 @@ ApplicationWindow {
                                 width: parent.width
                                 spacing: 10
 
-                                Text {
-                                    text: "<font face='monospace'>" + modelData.start + "</font> &rarr; <font face='monospace'>" + modelData.end + "</font>"
-                                    textFormat: Text.RichText
-                                    font.pixelSize: 14
-                                    Layout.preferredWidth: 70
-                                }
+                                Text { text: "<font face='monospace'>" + modelData.start + "</font> &rarr; <font face='monospace'>" + modelData.end + "</font>"; textFormat: Text.RichText; font.pixelSize: 14; Layout.preferredWidth: 70 }
                                 Text { text: "<b>=</b>"; textFormat: Text.RichText; font.pixelSize: 14 }
-                                Text {
-                                    text: "<font face='monospace'>" + modelData.code + "</font> " + modelData.ipa
-                                    textFormat: Text.RichText
-                                    font.pixelSize: 14
-                                    Layout.fillWidth: true
-                                }
-                                Text {
-                                    text: modelData.example
-                                    textFormat: Text.RichText
-                                    color: "#666666"
-                                    font.pixelSize: 14
-                                    Layout.alignment: Qt.AlignRight
-                                }
+                                Text { text: "<font face='monospace'>" + modelData.code + "</font> " + modelData.ipa; textFormat: Text.RichText; font.pixelSize: 14; Layout.fillWidth: true }
+                                Text { text: modelData.example; color: "#666666"; font.pixelSize: 14; Layout.alignment: Qt.AlignRight }
                             }
 
                             MouseArea {
@@ -207,7 +256,6 @@ ApplicationWindow {
         }
     }
 
-    // 3. Consonant Cell Component
     component Cell : Rectangle {
         id: cellRoot
         property string content: ""
@@ -226,7 +274,6 @@ ApplicationWindow {
             anchors.fill: parent
             anchors.margins: 4
             leftPadding: cellRoot.isRowHeader ? 5 : 0
-            
             text: cellRoot.content.replace(/<code>/g, "<font face='monospace'>").replace(/<\/code>/g, "</font>")
             textFormat: Text.RichText
             font.pixelSize: 14
@@ -241,14 +288,8 @@ ApplicationWindow {
         id: tabBar
         width: parent.width
         
-        TabButton {
-            text: "Vowels & Diphthongs"
-            font.pixelSize: 15
-        }
-        TabButton {
-            text: "Consonants"
-            font.pixelSize: 15
-        }
+        TabButton { text: "Vowels & Diphthongs"; font.pixelSize: 15 }
+        TabButton { text: "Consonants"; font.pixelSize: 15 }
     }
 
     // --- MAIN CONTENT AREA ---
@@ -267,17 +308,11 @@ ApplicationWindow {
                 width: parent.width
                 spacing: 40
 
-                // UPPER SECTION: Vowel Chart
                 ColumnLayout {
                     Layout.alignment: Qt.AlignHCenter
                     spacing: 15
 
-                    Text {
-                        text: "English Vowel Space"
-                        font.pixelSize: 22
-                        font.bold: true
-                        Layout.alignment: Qt.AlignHCenter
-                    }
+                    Text { text: "English Vowel Space"; font.pixelSize: 22; font.bold: true; Layout.alignment: Qt.AlignHCenter }
 
                     RowLayout {
                         spacing: 10
@@ -287,15 +322,7 @@ ApplicationWindow {
                             spacing: 0
                             Repeater {
                                 model: ["Close", "Near-close", "Close-mid", "Mid", "Open-mid", "Near-open", "Open"]
-                                Text {
-                                    text: "<b>" + modelData + "</b>"
-                                    textFormat: Text.RichText
-                                    font.pixelSize: 11
-                                    horizontalAlignment: Text.AlignRight
-                                    verticalAlignment: Text.AlignVCenter
-                                    width: 80
-                                    height: 30
-                                }
+                                Text { text: "<b>" + modelData + "</b>"; textFormat: Text.RichText; font.pixelSize: 11; horizontalAlignment: Text.AlignRight; verticalAlignment: Text.AlignVCenter; width: 80; height: 30 }
                             }
                         }
 
@@ -320,7 +347,6 @@ ApplicationWindow {
                                     fillMode: Image.PreserveAspectFit
                                 }
 
-                                // Dynamic Arrow Overlay
                                 Canvas {
                                     id: arrowCanvas
                                     anchors.fill: parent
@@ -371,28 +397,26 @@ ApplicationWindow {
                                     }
                                 }
 
-                                // Front Vowels
-                                VowelLabel { codeText: "i";  ipaText: "/i/"; relX: root.vowelMap["i"].x; relY: root.vowelMap["i"].y }
-                                VowelLabel { codeText: "I";  ipaText: "/ɪ/"; relX: root.vowelMap["I"].x; relY: root.vowelMap["I"].y }
-                                VowelLabel { codeText: "e";  ipaText: "/e/"; relX: root.vowelMap["e"].x; relY: root.vowelMap["e"].y }
-                                VowelLabel { codeText: "ae"; ipaText: "/æ/"; relX: root.vowelMap["ae"].x; relY: root.vowelMap["ae"].y }
+                                // DATA-DRIVEN: Vowels now grab their IPA dynamically from the JSON!
+                                VowelLabel { codeText: "i";  ipaText: root.getV("i"); relX: root.vowelMap["i"].x; relY: root.vowelMap["i"].y }
+                                VowelLabel { codeText: "I";  ipaText: root.getV("I"); relX: root.vowelMap["I"].x; relY: root.vowelMap["I"].y }
+                                VowelLabel { codeText: "e";  ipaText: root.getV("e"); relX: root.vowelMap["e"].x; relY: root.vowelMap["e"].y }
+                                VowelLabel { codeText: "ae"; ipaText: root.getV("ae"); relX: root.vowelMap["ae"].x; relY: root.vowelMap["ae"].y }
 
-                                // Central Vowels
-                                VowelLabel { codeText: "uh"; ipaText: "/ə/"; relX: root.vowelMap["uh"].x; relY: root.vowelMap["uh"].y }
-                                VowelLabel { codeText: "er"; ipaText: "/ɜː/"; relX: root.vowelMap["er"].x; relY: root.vowelMap["er"].y }
-                                VowelLabel { codeText: "^";  ipaText: "/ʌ/"; relX: root.vowelMap["^"].x; relY: root.vowelMap["^"].y }
+                                VowelLabel { codeText: "uh"; ipaText: root.getV("uh"); relX: root.vowelMap["uh"].x; relY: root.vowelMap["uh"].y }
+                                VowelLabel { codeText: "er"; ipaText: root.getV("er"); relX: root.vowelMap["er"].x; relY: root.vowelMap["er"].y }
+                                VowelLabel { codeText: "^";  ipaText: root.getV("^"); relX: root.vowelMap["^"].x; relY: root.vowelMap["^"].y }
 
-                                // Back Vowels
-                                VowelLabel { codeText: "u";  ipaText: "/u/"; relX: root.vowelMap["u"].x; relY: root.vowelMap["u"].y }
-                                VowelLabel { codeText: "oo"; ipaText: "/ʊ/"; relX: root.vowelMap["oo"].x; relY: root.vowelMap["oo"].y }
-                                VowelLabel { codeText: "ou"; ipaText: "/ɔː/"; relX: root.vowelMap["ou"].x; relY: root.vowelMap["ou"].y }
-                                VowelLabel { codeText: "aa"; ipaText: "/ɑː/"; extraText: " &bull; <font face='monospace'>ah</font> /ɒ/"; relX: root.vowelMap["aa"].x; relY: root.vowelMap["aa"].y }
+                                VowelLabel { codeText: "u";  ipaText: root.getV("u"); relX: root.vowelMap["u"].x; relY: root.vowelMap["u"].y }
+                                VowelLabel { codeText: "oo"; ipaText: root.getV("oo"); relX: root.vowelMap["oo"].x; relY: root.vowelMap["oo"].y }
+                                VowelLabel { codeText: "ou"; ipaText: root.getV("ou"); relX: root.vowelMap["ou"].x; relY: root.vowelMap["ou"].y }
+                                VowelLabel { codeText: "aa"; ipaText: root.getV("aa"); extraText: " &bull; <font face='monospace'>ah</font> " + root.getV("ah"); relX: root.vowelMap["aa"].x; relY: root.vowelMap["aa"].y }
                             }
                         }
                     }
                 }
 
-                // LOWER SECTION: Interactive Diphthong Cards
+                // DATA-DRIVEN: Cards are bound to the properties processed from JSON!
                 Flow {
                     Layout.fillWidth: true
                     spacing: 20
@@ -402,32 +426,21 @@ ApplicationWindow {
                         targetText: "/ɪ/"
                         themeColor: "#007bff"
                         bgColor: "#f8fbff"
-                        rowData: [
-                            { start: "e", end: "i", code: "eI", ipa: "/eɪ/", example: "b<b>ai</b>t" },
-                            { start: "a", end: "i", code: "aI", ipa: "/aɪ/", example: "b<b>i</b>te" },
-                            { start: "o", end: "i", code: "oy", ipa: "/ɔɪ/", example: "b<b>oy</b>" }
-                        ]
+                        rowData: root.diphthongGroup1
                     }
                     DiphthongCard {
                         titleText: "Closing to Back"
                         targetText: "/ʊ/"
                         themeColor: "#f44336"
                         bgColor: "#fff8f8"
-                        rowData: [
-                            { start: "uh", end: "u", code: "oa", ipa: "/əʊ/", example: "b<b>oa</b>t" },
-                            { start: "a", end: "u", code: "ow", ipa: "/aʊ/", example: "b<b>ou</b>t" }
-                        ]
+                        rowData: root.diphthongGroup2
                     }
                     DiphthongCard {
                         titleText: "Centering"
                         targetText: "/ə/"
                         themeColor: "#4caf50"
                         bgColor: "#f6fdf6"
-                        rowData: [
-                            { start: "i", end: "uh", code: "ia", ipa: "/ɪə/", example: "h<b>ere</b>" },
-                            { start: "e", end: "uh", code: "ea", ipa: "/eə/", example: "h<b>air</b>" },
-                            { start: "u", end: "uh", code: "ua", ipa: "/ʊə/", example: "t<b>our</b>" }
-                        ]
+                        rowData: root.diphthongGroup3
                     }
                 }
             }
@@ -453,28 +466,26 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignLeft
                 }
 
-                // Table Wrapper
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: grid.implicitHeight
-                    color: "#a2a9b1" // Border color
+                    color: "#a2a9b1"
 
                     GridLayout {
                         id: grid
                         anchors.fill: parent
-                        anchors.margins: 1 // Outer border
-                        rowSpacing: 1      // Inner horizontal borders
-                        columnSpacing: 1   // Inner vertical borders
-                        columns: 17        // Expanded for U/V split
+                        anchors.margins: 1
+                        rowSpacing: 1
+                        columnSpacing: 1
+                        columns: 17
 
-                        // --- ROW 1: Super Headers (Places of Articulation) ---
+                        // Headers
                         Cell { content: "<span style='font-size:12px'>Place of articulation &rarr;</span>"; isHeader: true; isRowHeader: true }
                         Cell { content: "<b>Labial</b>"; isHeader: true; Layout.columnSpan: 4 }
                         Cell { content: "<b>Coronal</b>"; isHeader: true; Layout.columnSpan: 6 }
                         Cell { content: "<b>Dorsal</b>"; isHeader: true; Layout.columnSpan: 4 }
                         Cell { content: "<b>Laryngeal</b>"; isHeader: true; Layout.columnSpan: 2 }
 
-                        // --- ROW 2: Sub Headers (Specific Places) ---
                         Cell { content: "<span style='font-size:12px'>Manner of articulation &darr;</span>"; isHeader: true; isRowHeader: true }
                         Cell { content: "Bilabial"; isHeader: true; Layout.columnSpan: 2 }
                         Cell { content: "Labio-dental"; isHeader: true; Layout.columnSpan: 2 }
@@ -485,68 +496,66 @@ ApplicationWindow {
                         Cell { content: "Velar"; isHeader: true; Layout.columnSpan: 2 }
                         Cell { content: "Glottal"; isHeader: true; Layout.columnSpan: 2 }
 
-                        // --- ROW 3: Voicing Headers (VL / VD) ---
                         Cell { isHeader: true; isRowHeader: true }
                         Repeater {
                             model: ["VL", "VD", "VL", "VD", "VL", "VD", "VL", "VD", "VL", "VD", "VL", "VD", "VL", "VD", "VL", "VD"]
-                            Cell { 
-                                content: "<span style='font-size:11px; color:#666666'>" + modelData + "</span>"
-                                isHeader: true 
-                            }
+                            Cell { content: "<span style='font-size:11px; color:#666666'>" + modelData + "</span>"; isHeader: true }
                         }
 
+                        // DATA-DRIVEN: Consonants grab their IPAs from the JSON!
+                        
                         // --- ROW 4: Nasal ---
                         Cell { content: "<b>Nasal</b>"; isHeader: true; isRowHeader: true }
-                        Cell { } Cell { content: "<code>m</code><br>/m/" } 
+                        Cell { } Cell { content: root.getC("m") } 
                         Cell { isInvalid: true } Cell { isInvalid: true }  
                         Cell { } Cell { }                                  
-                        Cell { } Cell { content: "<code>n</code><br>/n/" } 
+                        Cell { } Cell { content: root.getC("n") } 
                         Cell { } Cell { }                                  
                         Cell { } Cell { }                                  
-                        Cell { } Cell { content: "<code>ng</code><br>/ŋ/" }
+                        Cell { } Cell { content: root.getC("ng") }
                         Cell { isInvalid: true } Cell { isInvalid: true }  
 
                         // --- ROW 5: Plosive ---
                         Cell { content: "<b>Plosive</b>"; isHeader: true; isRowHeader: true }
-                        Cell { content: "<code>p</code><br>/p/" } Cell { content: "<code>b</code><br>/b/" } 
+                        Cell { content: root.getC("p") } Cell { content: root.getC("b") } 
                         Cell { } Cell { }                                                                    
                         Cell { } Cell { }                                                                    
-                        Cell { content: "<code>t</code><br>/t/" } Cell { content: "<code>d</code><br>/d/" } 
+                        Cell { content: root.getC("t") } Cell { content: root.getC("d") } 
                         Cell { } Cell { }                                                                    
                         Cell { } Cell { }                                                                    
-                        Cell { content: "<code>k</code><br>/k/" } Cell { content: "<code>g</code><br>/g/" } 
+                        Cell { content: root.getC("k") } Cell { content: root.getC("g") } 
                         Cell { } Cell { }                                                                    
 
                         // --- ROW 6: Affricate ---
                         Cell { content: "<b>Affricate</b>"; isHeader: true; isRowHeader: true }
                         Repeater { model: 8; Cell { } } 
-                        Cell { content: "<code>ch</code><br>/tʃ/" } Cell { content: "<code>jh</code><br>/dʒ/" } 
+                        Cell { content: root.getC("ch") } Cell { content: root.getC("jh") } 
                         Repeater { model: 6; Cell { } } 
 
                         // --- ROW 7: Fricative ---
                         Cell { content: "<b>Fricative</b>"; isHeader: true; isRowHeader: true }
                         Cell { } Cell { }                                                                      
-                        Cell { content: "<code>f</code><br>/f/" } Cell { content: "<code>v</code><br>/v/" }   
-                        Cell { content: "<code>th</code><br>/θ/" } Cell { content: "<code>dh</code><br>/ð/" } 
-                        Cell { content: "<code>s</code><br>/s/" } Cell { content: "<code>z</code><br>/z/" }   
-                        Cell { content: "<code>sh</code><br>/ʃ/" } Cell { content: "<code>zh</code><br>/ʒ/" } 
+                        Cell { content: root.getC("f") } Cell { content: root.getC("v") }   
+                        Cell { content: root.getC("th") } Cell { content: root.getC("dh") } 
+                        Cell { content: root.getC("s") } Cell { content: root.getC("z") }   
+                        Cell { content: root.getC("sh") } Cell { content: root.getC("zh") } 
                         Cell { } Cell { }                                                                      
                         Cell { } Cell { }                                                                      
-                        Cell { content: "<code>h</code><br>/h/" } Cell { }                                     
+                        Cell { content: root.getC("h") } Cell { }                                     
 
                         // --- ROW 8: Approximant ---
                         Cell { content: "<b>Approximant</b>"; isHeader: true; isRowHeader: true }
                         Repeater { model: 6; Cell { } } 
-                        Cell { } Cell { content: "<code>r</code><br>/r/" } 
+                        Cell { } Cell { content: root.getC("r") } 
                         Cell { } Cell { }                                  
-                        Cell { } Cell { content: "<code>j</code><br>/j/" } 
-                        Cell { } Cell { content: "<code>w</code><br>/w/ *" } 
+                        Cell { } Cell { content: root.getC("j") } // Note: JSON uses 'j' instead of 'y'
+                        Cell { } Cell { content: root.getC("w") } 
                         Cell { } Cell { }                                  
 
                         // --- ROW 9: Tap or Flap ---
                         Cell { content: "<b>Tap or Flap</b>"; isHeader: true; isRowHeader: true }
                         Repeater { model: 6; Cell { } } 
-                        Cell { } Cell { content: "<code>tt</code><br>/ɾ/" } 
+                        Cell { } Cell { content: root.getC("tt") } 
                         Repeater { model: 8; Cell { } } 
 
                         // --- ROW 10: Lateral Approximant ---
@@ -554,7 +563,7 @@ ApplicationWindow {
                         Cell { isInvalid: true } Cell { isInvalid: true }  
                         Cell { isInvalid: true } Cell { isInvalid: true }  
                         Cell { } Cell { }                                  
-                        Cell { } Cell { content: "<code>l</code><br>/l/" } 
+                        Cell { } Cell { content: root.getC("l") } 
                         Cell { } Cell { }                                  
                         Cell { } Cell { }                                  
                         Cell { } Cell { }                                  
@@ -562,7 +571,6 @@ ApplicationWindow {
                     }
                 }
 
-                // Footnotes
                 Text {
                     text: "<i>* <b>VL</b> = Voiceless &nbsp;&nbsp;|&nbsp;&nbsp; <b>VD</b> = Voiced<br>* Note: <code>w</code> is a labio-velar approximant, meaning it is co-articulated at both the velum and the lips.</i>".replace(/<code>/g, "<font face='monospace'>").replace(/<\/code>/g, "</font>")
                     textFormat: Text.RichText
