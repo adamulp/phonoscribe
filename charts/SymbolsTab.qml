@@ -37,16 +37,18 @@ ScrollView {
         if (!phonemeData) return;
         
         var mList = [];
-        for (var mKey in phonemeData.modifiers) {
-            var mItem = phonemeData.modifiers[mKey];
-            mList.push({ type: "modifiers", oldCode: mKey, code: mKey, ipa: mItem.ipa, name: mItem.name, desc: mItem.desc });
+        // UPDATED: Now iterates over the modifiers array instead of an object
+        for (var i = 0; i < phonemeData.modifiers.length; i++) {
+            var mItem = phonemeData.modifiers[i];
+            mList.push({ type: "modifiers", oldCode: mItem.code, code: mItem.code, ipa: mItem.ipa, name: mItem.name, desc: mItem.desc });
         }
         modifiersList = mList;
 
         var dList = [];
-        for (var dKey in phonemeData.delimiters) {
-            var dItem = phonemeData.delimiters[dKey];
-            dList.push({ type: "delimiters", oldCode: dKey, code: dKey, ipa: dItem.ipa, name: dItem.name, desc: dItem.desc });
+        // UPDATED: Now iterates over the delimiters array
+        for (var j = 0; j < phonemeData.delimiters.length; j++) {
+            var dItem = phonemeData.delimiters[j];
+            dList.push({ type: "delimiters", oldCode: dItem.code, code: dItem.code, ipa: dItem.ipa, name: dItem.name, desc: dItem.desc });
         }
         delimitersList = dList;
     }
@@ -56,14 +58,10 @@ ScrollView {
         // Prevent accidental blanks or identical saves
         if (oldCode === newCode || newCode.trim() === "") return; 
         
-        // 1. Re-key the object in the internal JSON model
-        var item = phonemeData[type][oldCode];
-        delete phonemeData[type][oldCode];
-        phonemeData[type][newCode] = item;
+        // 1. UPDATED: Directly mutate the property at the JSON index! Much cleaner.
+        phonemeData[type][index].code = newCode;
         
-        // FIX 1: Mutate the array directly in-place!
-        // By NOT re-assigning the array (e.g. modifiersList = mList), we prevent the 
-        // Repeater from destroying and redrawing the text fields, keeping the Tab focus chain completely intact.
+        // 2. Modify the array in-place to retain exact visual order
         if (type === "modifiers") {
             modifiersList[index].code = newCode;
             modifiersList[index].oldCode = newCode;
@@ -143,8 +141,8 @@ ScrollView {
 
                         // Hit escape to cancel edits
                         Keys.onEscapePressed: {
-                            text = modelData.oldCode; // Revert text
-                            focus = false; // Drop focus
+                            text = modelData.oldCode; 
+                            focus = false; 
                         }
 
                         // Hit enter to drop focus
@@ -159,7 +157,7 @@ ScrollView {
                             // If the user presses Tab, they naturally lose focus on this field (triggering this block)
                             // while seamlessly retaining focus on the newly targeted field!
                             
-                            // Failsafe: Update local delegate reference manually just to guarantee state consistency 
+                            // Keep QML state consistent locally
                             modelData.oldCode = text;
                             modelData.code = text;
                         }

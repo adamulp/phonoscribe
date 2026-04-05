@@ -1,15 +1,15 @@
 {
-  "delimiters": {
-    ".":  {"ipa": ".", "name": "Syllable break", "desc": "Separates phonological beats"},
-    "|":  {"ipa": "|", "name": "Minor group",    "desc": "Short pause / foot boundary"},
-    "||": {"ipa": "‖", "name": "Major group", "desc": "Full stop / intonational break"}
-  },
-  "modifiers": {
-    ":":  {"ipa": "ː", "name": "Length mark",     "desc": "Triangular colon for long vowels"},
-    "'":  {"ipa": "ˈ", "name": "Primary stress",  "desc": "Raised vertical line before syllable"},
-    ",":  {"ipa": "ˌ", "name": "Secondary stress", "desc": "Lowered vertical line before syllable"},
-    "~":  {"ipa": "̃", "name": "Tilde",           "desc": "Combining diacritic for nasalization"}
-  },
+  "delimiters": [
+    {"code": ".", "ipa": ".", "name": "Syllable break", "desc": "Separates phonological beats"},
+    {"code": "|", "ipa": "|", "name": "Minor group",    "desc": "Short pause / foot boundary"},
+    {"code": "||", "ipa": "‖", "name": "Major group", "desc": "Full stop / intonational break"}
+  ],
+  "modifiers": [
+    {"code": ":", "ipa": "ː", "name": "Length mark",     "desc": "Triangular colon for long vowels"},
+    {"code": "'", "ipa": "ˈ", "name": "Primary stress",  "desc": "Raised vertical line before syllable"},
+    {"code": ",", "ipa": "ˌ", "name": "Secondary stress", "desc": "Lowered vertical line before syllable"},
+    {"code": "~", "ipa": "̃", "name": "Tilde",           "desc": "Combining diacritic for nasalization"}
+  ],
   "monophthongs": {
     "short_vowels": [
       {"code": "I",  "ipa": "ɪ", "pos": "High-mid, Front",       "ex": "bit"},
