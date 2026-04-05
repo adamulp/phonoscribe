@@ -1,0 +1,72 @@
+{
+  "delimiters": {
+    ".":  {"ipa": ".", "name": "Syllable break", "desc": "Separates phonological beats"},
+    "|":  {"ipa": "|", "name": "Minor group",    "desc": "Short pause / foot boundary"},
+    "||": {"ipa": "\u2016", "name": "Major group", "desc": "Full stop / intonational break"}
+  },
+  "modifiers": {
+    ":":  {"ipa": "\u02d0", "name": "Length mark",     "desc": "Triangular colon for long vowels"},
+    "'":  {"ipa": "\u02c8", "name": "Primary stress",  "desc": "Raised vertical line before syllable"},
+    ",":  {"ipa": "\u02cc", "name": "Secondary stress", "desc": "Lowered vertical line before syllable"},
+    "~":  {"ipa": "\u0303", "name": "Tilde",           "desc": "Combining diacritic for nasalization"}
+  },
+  "monophthongs": {
+    "short_vowels": [
+      {"code": "I",  "ipa": "\u026a", "pos": "High-mid, Front",       "ex": "bit"},
+      {"code": "e",  "ipa": "e",      "pos": "Mid, Front",             "ex": "bet"},
+      {"code": "ae", "ipa": "\u00e6", "pos": "Low, Front",             "ex": "bat"},
+      {"code": "^ ",  "ipa": "\u028c", "pos": "Low-mid, Back-central",  "ex": "but"},
+      {"code": "ah",  "ipa": "\u0252", "pos": "Low, Back",              "ex": "pot"},
+      {"code": "oo",  "ipa": "\u028a", "pos": "High-mid, Back",         "ex": "book"},
+      {"code": "uh", "ipa": "\u0259", "pos": "Mid, Central",           "ex": "about"}
+    ],
+    "long_vowels": [
+      {"code": "i", "ipa": "i", "pos": "High, Front",      "ex": "beat"},
+      {"code": "er", "ipa": "\u025c\u02d0", "pos": "Mid, Central", "ex": "bird"},
+      {"code": "aa", "ipa": "\u0251\u02d0", "pos": "Low, Back",    "ex": "car"},
+      {"code": "ou", "ipa": "\u0254\u02d0", "pos": "Mid-low, Back","ex": "bought"},
+      {"code": "u", "ipa": "u",  "pos": "High, Back",      "ex": "boot"}
+    ]
+  },
+  "diphthongs": [
+    {"code": "eI", "ipa": "e\u026a", "ex": "bait"},
+    {"code": "aI", "ipa": "a\u026a", "ex": "bite"},
+    {"code": "oy", "ipa": "\u0254\u026a", "ex": "boy"},
+    {"code": "ow", "ipa": "a\u028a", "ex": "bout"},
+    {"code": "oa", "ipa": "\u0259\u028a", "ex": "boat"},
+    {"code": "ia", "ipa": "\u026a\u0259", "ex": "here"},
+    {"code": "ea", "ipa": "e\u0259", "ex": "hair"},
+    {"code": "ua", "ipa": "\u028a\u0259", "ex": "tour"}
+  ],
+  "consonants": {
+    "plosives": [
+      {"code": "p", "ipa": "p"}, {"code": "b", "ipa": "b"},
+      {"code": "t", "ipa": "t"}, {"code": "d", "ipa": "d"},
+      {"code": "k", "ipa": "k"}, {"code": "g", "ipa": "g"}
+    ],
+    "fricatives": [
+      {"code": "f",  "ipa": "f"}, {"code": "v",  "ipa": "v"},
+      {"code": "th", "ipa": "\u03b8", "ex": "thin"},
+      {"code": "dh", "ipa": "\u00f0", "ex": "that"},
+      {"code": "s",  "ipa": "s"}, {"code": "z",  "ipa": "z"},
+      {"code": "sh", "ipa": "\u0283", "ex": "ship"},
+      {"code": "zh", "ipa": "\u0292", "ex": "measure"},
+      {"code": "h",  "ipa": "h"}
+    ],
+    "affricates": [
+      {"code": "ch", "ipa": "t\u0283"},
+      {"code": "jh", "ipa": "d\u0292"}
+    ],
+    "nasals": [
+      {"code": "m",  "ipa": "m"}, {"code": "n",  "ipa": "n"},
+      {"code": "ng", "ipa": "\u014b"}
+    ],
+    "approximants": [
+      {"code": "l", "ipa": "l"}, {"code": "r", "ipa": "r"},
+      {"code": "j", "ipa": "j"}, {"code": "w", "ipa": "w"}
+    ],
+    "extra": [
+      {"code": "tt", "ipa": "\u027e", "desc": "Alveolar tap/flap"}
+    ]
+  }
+}
