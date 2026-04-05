@@ -51,6 +51,14 @@ ApplicationWindow {
         // NEW: Dynamic Z-indexing!
         z: isActive ? 20 : 10 
         
+        // NEW: Drop opacity to 30% if a glide is active but this label isn't part of it
+        opacity: (root.activeStartCode !== "" && !isActive) ? 0.3 : 1.0
+        
+        // NEW: Smoothly animate the fade effect over 200 milliseconds
+        Behavior on opacity {
+            NumberAnimation { duration: 200 }
+        }
+        
         color: isActive ? root.activeColor : "white"
         border.color: isActive ? Qt.darker(root.activeColor, 1.2) : "#dddddd"
         border.width: isActive ? 2 : 1
@@ -282,31 +290,41 @@ ApplicationWindow {
                                         var endNode = root.vowelMap[root.activeEndCode];
 
                                         if (startNode && endNode) {
-                                            // Offset slightly so lines draw from the center of the label bounds
-                                            var startX = (startNode.x * 300) + 15;
-                                            var startY = (startNode.y * 210) + 10;
-                                            var endX = (endNode.x * 300) + 15;
-                                            var endY = (endNode.y * 210) + 10;
+                                            // Center points of the labels
+                                            var startX = (startNode.x * 300) + 20; 
+                                            var startY = (startNode.y * 210) + 12;
+                                            var targetX = (endNode.x * 300) + 20;
+                                            var targetY = (endNode.y * 210) + 12;
 
+                                            var angle = Math.atan2(targetY - startY, targetX - startX);
+
+                                            // Pull the endpoint back by 28 pixels to clear the active label's bounding box
+                                            var pullBack = 28;
+                                            var tipX = targetX - pullBack * Math.cos(angle);
+                                            var tipY = targetY - pullBack * Math.sin(angle);
+
+                                            // NEW: Stop the thick line 6 pixels short of the tip so it doesn't poke out
+                                            var lineStopX = tipX - 6 * Math.cos(angle);
+                                            var lineStopY = tipY - 6 * Math.sin(angle);
+
+                                            // Draw the line stopping early
                                             ctx.beginPath();
                                             ctx.moveTo(startX, startY);
-                                            ctx.lineTo(endX, endY);
+                                            ctx.lineTo(lineStopX, lineStopY);
                                             ctx.lineWidth = 3;
                                             ctx.strokeStyle = root.activeColor;
                                             ctx.stroke();
 
-                                            // Draw Arrowhead
-                                            var angle = Math.atan2(endY - startY, endX - startX);
-                                            var headLen = 12;
-                                            // Pull arrowhead back slightly so it doesn't hide behind the end label
-                                            endX = endX - 15 * Math.cos(angle);
-                                            endY = endY - 15 * Math.sin(angle);
+                                            // NEW: Sharper, sleeker arrowhead
+                                            var headLen = 18;             // Increased length
+                                            var headAngle = Math.PI / 8;  // Sharper angle (22.5 degrees)
                                             
+                                            // Draw the arrowhead exactly at the tip
                                             ctx.beginPath();
-                                            ctx.moveTo(endX, endY);
-                                            ctx.lineTo(endX - headLen * Math.cos(angle - Math.PI / 6), endY - headLen * Math.sin(angle - Math.PI / 6));
-                                            ctx.lineTo(endX - headLen * Math.cos(angle + Math.PI / 6), endY - headLen * Math.sin(angle + Math.PI / 6));
-                                            ctx.lineTo(endX, endY);
+                                            ctx.moveTo(tipX, tipY);
+                                            ctx.lineTo(tipX - headLen * Math.cos(angle - headAngle), tipY - headLen * Math.sin(angle - headAngle));
+                                            ctx.lineTo(tipX - headLen * Math.cos(angle + headAngle), tipY - headLen * Math.sin(angle + headAngle));
+                                            ctx.lineTo(tipX, tipY);
                                             ctx.fillStyle = root.activeColor;
                                             ctx.fill();
                                         }
