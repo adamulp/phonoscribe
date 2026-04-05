@@ -18,6 +18,10 @@ ApplicationWindow {
     property var diphthongGroup2: []
     property var diphthongGroup3: []
 
+    // Arrays for Symbols
+    property var modifiersList: []
+    property var delimitersList: []
+
     Component.onCompleted: {
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
@@ -26,6 +30,7 @@ ApplicationWindow {
                     try {
                         phonemeData = JSON.parse(xhr.responseText);
                         processDiphthongs();
+                        processSymbols();
                     } catch (e) {
                         console.error("Error parsing JSON: " + e);
                     }
@@ -93,6 +98,24 @@ ApplicationWindow {
         diphthongGroup1 = g1;
         diphthongGroup2 = g2;
         diphthongGroup3 = g3;
+    }
+
+    function processSymbols() {
+        if (!phonemeData) return;
+        
+        var mList = [];
+        for (var mKey in phonemeData.modifiers) {
+            var mItem = phonemeData.modifiers[mKey];
+            mList.push({ code: mKey, ipa: mItem.ipa, name: mItem.name, desc: mItem.desc });
+        }
+        modifiersList = mList;
+
+        var dList = [];
+        for (var dKey in phonemeData.delimiters) {
+            var dItem = phonemeData.delimiters[dKey];
+            dList.push({ code: dKey, ipa: dItem.ipa, name: dItem.name, desc: dItem.desc });
+        }
+        delimitersList = dList;
     }
 
     // --- GLOBAL INTERACTIVE STATE (For Vowels) ---
@@ -283,6 +306,50 @@ ApplicationWindow {
         }
     }
 
+    component SymbolTable : Rectangle {
+        id: symTable
+        Layout.fillWidth: true
+        implicitHeight: symLayout.implicitHeight + 20
+        color: "#f8f9fa"
+        border.color: "#dee2e6"
+        border.width: 1
+        radius: 8
+
+        property var modelDataList: []
+
+        ColumnLayout {
+            id: symLayout
+            anchors.fill: parent
+            anchors.margins: 15
+            spacing: 8
+
+            // Headers
+            RowLayout {
+                Layout.fillWidth: true
+                Text { text: "<b>Code</b>"; textFormat: Text.RichText; font.pixelSize: 15; Layout.preferredWidth: 80 }
+                Text { text: "<b>IPA</b>"; textFormat: Text.RichText; font.pixelSize: 15; Layout.preferredWidth: 60 }
+                Text { text: "<b>Name</b>"; textFormat: Text.RichText; font.pixelSize: 15; Layout.preferredWidth: 180 }
+                Text { text: "<b>Description</b>"; textFormat: Text.RichText; font.pixelSize: 15; Layout.fillWidth: true }
+            }
+
+            Rectangle { Layout.fillWidth: true; height: 1; color: "#dee2e6"; Layout.bottomMargin: 5 }
+
+            Repeater {
+                model: symTable.modelDataList
+                delegate: RowLayout {
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: 8
+                    
+                    Text { text: "<font face='monospace'>" + modelData.code + "</font>"; textFormat: Text.RichText; font.pixelSize: 16; Layout.preferredWidth: 80 }
+                    Text { text: modelData.ipa; font.pixelSize: 16; Layout.preferredWidth: 60 }
+                    Text { text: modelData.name; font.pixelSize: 15; font.bold: true; color: "#333333"; Layout.preferredWidth: 180 }
+                    Text { text: modelData.desc; font.pixelSize: 15; color: "#666666"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                }
+            }
+        }
+    }
+
+
     // --- NAVIGATION HEADER ---
     header: TabBar {
         id: tabBar
@@ -290,6 +357,7 @@ ApplicationWindow {
         
         TabButton { text: "Vowels & Diphthongs"; font.pixelSize: 15 }
         TabButton { text: "Consonants"; font.pixelSize: 15 }
+        TabButton { text: "Symbols"; font.pixelSize: 15 }
     }
 
     // --- MAIN CONTENT AREA ---
@@ -548,7 +616,7 @@ ApplicationWindow {
                         Repeater { model: 6; Cell { } } 
                         Cell { } Cell { content: root.getC("r") } 
                         Cell { } Cell { }                                  
-                        Cell { } Cell { content: root.getC("j") } // Note: JSON uses 'j' instead of 'y'
+                        Cell { } Cell { content: root.getC("j") } 
                         Cell { } Cell { content: root.getC("w") } 
                         Cell { } Cell { }                                  
 
@@ -577,6 +645,50 @@ ApplicationWindow {
                     font.pixelSize: 12
                     color: "#555555"
                     Layout.topMargin: 5
+                }
+            }
+        }
+
+        // TAB 3: Symbols View
+        ScrollView {
+            anchors.fill: parent
+            anchors.margins: 20
+            contentWidth: availableWidth
+            clip: true
+
+            ColumnLayout {
+                width: parent.width
+                spacing: 25
+
+                Text {
+                    text: "Modifiers & Delimiters"
+                    font.pixelSize: 22
+                    font.bold: true
+                    Layout.alignment: Qt.AlignLeft
+                }
+
+                Text {
+                    text: "Modifiers"
+                    font.pixelSize: 18
+                    font.bold: true
+                    color: "#4caf50"
+                    Layout.topMargin: 10
+                }
+                
+                SymbolTable {
+                    modelDataList: root.modifiersList
+                }
+
+                Text {
+                    text: "Delimiters"
+                    font.pixelSize: 18
+                    font.bold: true
+                    color: "#007bff"
+                    Layout.topMargin: 20
+                }
+                
+                SymbolTable {
+                    modelDataList: root.delimitersList
                 }
             }
         }
