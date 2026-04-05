@@ -48,6 +48,9 @@ ApplicationWindow {
                                 (root.activeStartCode === "a" && (codeText === "ae" || codeText === "aa" || codeText === "ah")) ||
                                 (root.activeStartCode === "o" && (codeText === "ou" || codeText === "ah"))
         
+        // NEW: Dynamic Z-indexing!
+        z: isActive ? 20 : 10 
+        
         color: isActive ? root.activeColor : "white"
         border.color: isActive ? Qt.darker(root.activeColor, 1.2) : "#dddddd"
         border.width: isActive ? 2 : 1
@@ -268,7 +271,7 @@ ApplicationWindow {
                             Canvas {
                                 id: arrowCanvas
                                 anchors.fill: parent
-                                z: 5 // Ensure it draws above the image but under the labels
+                                z: 15 // INCREASED: Now draws on top of the VowelLabels
 
                                 onPaint: {
                                     var ctx = getContext("2d");
@@ -311,22 +314,23 @@ ApplicationWindow {
                                 }
                             }
 
-                            // Front Vowels
-                            VowelLabel { codeText: "i";  ipaText: "/i/"; relX: root.vowelMap["i"].x; relY: root.vowelMap["i"].y; z: 10 }
-                            VowelLabel { codeText: "I";  ipaText: "/ɪ/"; relX: root.vowelMap["I"].x; relY: root.vowelMap["I"].y; z: 10 }
-                            VowelLabel { codeText: "e";  ipaText: "/e/"; relX: root.vowelMap["e"].x; relY: root.vowelMap["e"].y; z: 10 }
-                            VowelLabel { codeText: "ae"; ipaText: "/æ/"; relX: root.vowelMap["ae"].x; relY: root.vowelMap["ae"].y; z: 10 }
+                            // Front Vowels (Notice: no 'z: 10' at the end anymore)
+                            VowelLabel { codeText: "i";  ipaText: "/i/"; relX: root.vowelMap["i"].x; relY: root.vowelMap["i"].y }
+                            VowelLabel { codeText: "I";  ipaText: "/ɪ/"; relX: root.vowelMap["I"].x; relY: root.vowelMap["I"].y }
+                            VowelLabel { codeText: "e";  ipaText: "/e/"; relX: root.vowelMap["e"].x; relY: root.vowelMap["e"].y }
+                            VowelLabel { codeText: "ae"; ipaText: "/æ/"; relX: root.vowelMap["ae"].x; relY: root.vowelMap["ae"].y }
 
                             // Central Vowels
-                            VowelLabel { codeText: "uh"; ipaText: "/ə/"; relX: root.vowelMap["uh"].x; relY: root.vowelMap["uh"].y; z: 10 }
-                            VowelLabel { codeText: "er"; ipaText: "/ɜː/"; relX: root.vowelMap["er"].x; relY: root.vowelMap["er"].y; z: 10 }
-                            VowelLabel { codeText: "^";  ipaText: "/ʌ/"; relX: root.vowelMap["^"].x; relY: root.vowelMap["^"].y; z: 10 }
+                            VowelLabel { codeText: "uh"; ipaText: "/ə/"; relX: root.vowelMap["uh"].x; relY: root.vowelMap["uh"].y }
+                            VowelLabel { codeText: "er"; ipaText: "/ɜː/"; relX: root.vowelMap["er"].x; relY: root.vowelMap["er"].y }
+                            VowelLabel { codeText: "^";  ipaText: "/ʌ/"; relX: root.vowelMap["^"].x; relY: root.vowelMap["^"].y }
 
                             // Back Vowels
-                            VowelLabel { codeText: "u";  ipaText: "/u/"; relX: root.vowelMap["u"].x; relY: root.vowelMap["u"].y; z: 10 }
-                            VowelLabel { codeText: "oo"; ipaText: "/ʊ/"; relX: root.vowelMap["oo"].x; relY: root.vowelMap["oo"].y; z: 10 }
-                            VowelLabel { codeText: "ou"; ipaText: "/ɔː/"; relX: root.vowelMap["ou"].x; relY: root.vowelMap["ou"].y; z: 10 }
-                            VowelLabel { codeText: "aa"; ipaText: "/ɑː/"; extraText: " &bull; <font face='monospace'>ah</font> /ɒ/"; relX: root.vowelMap["aa"].x; relY: root.vowelMap["aa"].y; z: 10 }
+                            VowelLabel { codeText: "u";  ipaText: "/u/"; relX: root.vowelMap["u"].x; relY: root.vowelMap["u"].y }
+                            VowelLabel { codeText: "oo"; ipaText: "/ʊ/"; relX: root.vowelMap["oo"].x; relY: root.vowelMap["oo"].y }
+                            VowelLabel { codeText: "ou"; ipaText: "/ɔː/"; relX: root.vowelMap["ou"].x; relY: root.vowelMap["ou"].y }
+                            VowelLabel { codeText: "aa"; ipaText: "/ɑː/"; extraText: " &bull; <font face='monospace'>ah</font> /ɒ/"; relX: root.vowelMap["aa"].x; relY: root.vowelMap["aa"].y }
+                           
                         }
                     }
                 }
