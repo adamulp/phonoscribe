@@ -15,21 +15,21 @@
       {"code": "I",  "ipa": "\u026a", "pos": "High-mid, Front",       "ex": "bit"},
       {"code": "e",  "ipa": "e",      "pos": "Mid, Front",             "ex": "bet"},
       {"code": "ae", "ipa": "\u00e6", "pos": "Low, Front",             "ex": "bat"},
-      {"code": "^",  "ipa": "\u028c", "pos": "Low-mid, Back-central",  "ex": "but"},
-      {"code": "o",  "ipa": "\u0252", "pos": "Low, Back",              "ex": "pot"},
-      {"code": "u",  "ipa": "\u028a", "pos": "High-mid, Back",         "ex": "book"},
+      {"code": "^ ",  "ipa": "\u028c", "pos": "Low-mid, Back-central",  "ex": "but"},
+      {"code": "ah",  "ipa": "\u0252", "pos": "Low, Back",              "ex": "pot"},
+      {"code": "oo",  "ipa": "\u028a", "pos": "High-mid, Back",         "ex": "book"},
       {"code": "uh", "ipa": "\u0259", "pos": "Mid, Central",           "ex": "about"}
     ],
     "long_vowels": [
-      {"code": "ee", "ipa": "i\u02d0", "pos": "High, Front",      "ex": "beat"},
+      {"code": "i", "ipa": "i", "pos": "High, Front",      "ex": "beat"},
       {"code": "er", "ipa": "\u025c\u02d0", "pos": "Mid, Central", "ex": "bird"},
       {"code": "aa", "ipa": "\u0251\u02d0", "pos": "Low, Back",    "ex": "car"},
       {"code": "ou", "ipa": "\u0254\u02d0", "pos": "Mid-low, Back","ex": "bought"},
-      {"code": "oo", "ipa": "u\u02d0",  "pos": "High, Back",      "ex": "boot"}
+      {"code": "u", "ipa": "u",  "pos": "High, Back",      "ex": "boot"}
     ]
   },
   "diphthongs": [
-    {"code": "ay", "ipa": "e\u026a", "ex": "bait"},
+    {"code": "eI", "ipa": "e\u026a", "ex": "bait"},
     {"code": "aI", "ipa": "a\u026a", "ex": "bite"},
     {"code": "oy", "ipa": "\u0254\u026a", "ex": "boy"},
     {"code": "ow", "ipa": "a\u028a", "ex": "bout"},
