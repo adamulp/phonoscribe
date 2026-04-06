@@ -1,17 +1,37 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import MyApp.Utils 1.0    // NEW: Import your FileIO module
 
 ScrollView {
     id: symbolsRoot
     anchors.fill: parent
     anchors.margins: 20
     contentWidth: availableWidth
+    
+    // FIX: Explicitly bind the scroll height so it doesn't collapse to 0px!
+    contentHeight: mainLayout.implicitHeight 
+    
     clip: true
     
     // FIX 1: Explicitly allow the ScrollView to accept focus
     focus: true 
 
+    // --- INJECTED DATA ---
+    // FIX: Custom properties must be declared at the top of the file!
+    // This ensures the QML engine successfully registers "onPhonemeDataChanged" 
+    // before it attempts to parse any child objects.
+    property var phonemeData: null
+    property var modifiersList: []
+    property var delimitersList: []
+
+    onPhonemeDataChanged: processSymbols()
+
+    // NEW: Triggers immediately when the tab is first built, 
+    // catching the data if it was already fetched by main.qml!
+    Component.onCompleted: processSymbols()
+
+    // Dummy item to steal focus when the background is clicked
     // FIX: An invisible dummy item that exists purely to successfully steal focus.
     // (ScrollView naturally resists taking focus itself).
     Item {
@@ -25,16 +45,15 @@ ScrollView {
         onTapped: focusDummy.forceActiveFocus()
     }
 
-    // --- INJECTED DATA ---
-    property var phonemeData: null
+// Instantiate our C++ or Python helper
+    FileIO {
+        id: fileHelper
+    }
 
-    property var modifiersList: []
-    property var delimitersList: []
-
-    onPhonemeDataChanged: processSymbols()
 
     function processSymbols() {
-        if (!phonemeData) return;
+        // Added an extra safety check just in case the JSON is still loading
+        if (!phonemeData || !phonemeData.modifiers || !phonemeData.delimiters) return;
         
         var mList = [];
         // UPDATED: Now iterates over the modifiers array instead of an object
@@ -58,7 +77,7 @@ ScrollView {
         // Prevent accidental blanks or identical saves
         if (oldCode === newCode || newCode.trim() === "") return; 
         
-        // 1. UPDATED: Directly mutate the property at the JSON index! Much cleaner.
+        // 1. Directly mutate the property at the JSON index!
         phonemeData[type][index].code = newCode;
         
         // 2. Modify the array in-place to retain exact visual order
@@ -70,10 +89,17 @@ ScrollView {
             delimitersList[index].oldCode = newCode;
         }
 
-        // 3. Log the update
+        // 3. Stringify the updated JSON object (with 2 spaces of indentation for readability)
         var newJsonString = JSON.stringify(phonemeData, null, 2);
-        console.log("Data updated internally! New JSON:\n", newJsonString);
-        console.log("NOTE: To write this to 'en_phonemes.json' on disk, pass 'newJsonString' to a C++ FileIO class.");
+        
+        // 3. Save via backend
+        var success = fileHelper.write("en_phonemes.json", newJsonString);
+        
+        if (success) {
+            console.log("Successfully saved updates to en_phonemes.json!");
+        } else {
+            console.error("Failed to write to en_phonemes.json.");
+        }
     }
 
     // --- REUSABLE COMPONENTS ---
@@ -172,6 +198,7 @@ ScrollView {
 
     // --- TAB LAYOUT ---
     ColumnLayout {
+        id: mainLayout // FIX: Added ID so the ScrollView can read its height!
         width: parent.width
         spacing: 25
 
